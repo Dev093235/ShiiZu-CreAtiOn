@@ -2,26 +2,41 @@ let slideIndex = 0;
 const maxPhotos = 30;
 const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
 
-// Initialize waifu2x-wasm
-const waifu2x = new Waifu2x();
-waifu2x.init().then(() => {
-    console.log('Waifu2x initialized');
-});
+// Initialize waifu2x-wasm with error handling
+let waifu2x;
+async function initWaifu2x() {
+    try {
+        waifu2x = new Waifu2x();
+        await waifu2x.init();
+        console.log('Waifu2x initialized successfully');
+    } catch (error) {
+        console.error('Waifu2x initialization failed:', error);
+        alert('Image enhancement failed to initialize. Using original images.');
+        waifu2x = null; // Fallback to no upscaling
+    }
+}
+initWaifu2x();
 
-// Function to upscale image using waifu2x
+// Function to upscale image using waifu2x (with fallback)
 async function upscaleImage(dataUrl) {
-    const img = new Image();
-    img.src = dataUrl;
-    await new Promise(resolve => img.onload = resolve);
+    if (!waifu2x) return dataUrl; // Fallback if upscaling fails
+    try {
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise(resolve => img.onload = resolve);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width * 2; // 2x upscaling (HD quality)
-    canvas.height = img.height * 2;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * 2; // 2x upscaling
+        canvas.height = img.height * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    const upscaledDataUrl = await waifu2x.upscale(canvas.toDataURL('image/jpeg'));
-    return upscaledDataUrl;
+        const upscaledDataUrl = await waifu2x.upscale(canvas.toDataURL('image/jpeg'));
+        return upscaledDataUrl || dataUrl; // Return upscaled or original if fails
+    } catch (error) {
+        console.error('Upscaling error:', error);
+        return dataUrl; // Fallback to original
+    }
 }
 
 // Compress image (optional step before upscaling)
@@ -77,15 +92,19 @@ function cleanExpiredPhotos() {
 // Load Gallery with Balloons Behind Photos
 function loadGallery(container) {
     cleanExpiredPhotos();
-    container.innerHTML = '';
+    container.innerHTML = ''; // Clear gallery
     const photos = JSON.parse(localStorage.getItem('photos')) || [];
-    photos.forEach(photo => {
+    if (photos.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">No photos uploaded yet!</p>';
+        return;
+    }
+    photos.forEach((photo, index) => {
         const col = document.createElement('div');
         col.className = 'col-md-4 mb-4';
         col.innerHTML = `
             <div class="card">
-                <a href="${photo.url}" download="sizzu_edited_photo.jpg">
-                    <img src="${photo.url}" class="card-img-top" alt="Sizzu Photo">
+                <a href="${photo.url}" download="sizzu_edited_photo_${index}.jpg">
+                    <img src="${photo.url}" class="card-img-top" alt="Sizzu Photo ${index}">
                 </a>
             </div>
         `;
@@ -140,8 +159,8 @@ if (uploadBtn) {
                         loadGallery(document.getElementById('gallery'));
                     }
                 } catch (error) {
-                    console.error('Upscaling error:', error);
-                    alert('Enhancement failed, using original image. Check browser performance.');
+                    console.error('Upscaling or save error:', error);
+                    alert('Enhancement failed, using original image. Check console for details.');
                     if (savePhoto(dataUrl)) {
                         loadGallery(document.getElementById('gallery'));
                     }
@@ -162,6 +181,8 @@ function showSlideshow() {
         slideIndex = 0;
         slideshowImg.src = photos[slideIndex].url;
         slideshow.style.display = 'flex';
+    } else {
+        alert('No photos to show in slideshow!');
     }
 }
 
@@ -174,6 +195,6 @@ function changeSlide(n) {
     slideshowImg.src = photos[slideIndex].url;
 }
 
-// Load Gallery
+// Load Gallery on page load
 const gallery = document.getElementById('gallery');
 if (gallery) loadGallery(gallery);
