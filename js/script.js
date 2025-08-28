@@ -1,45 +1,48 @@
 let slideIndex = 0;
 const maxPhotos = 30;
-const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
+const expiryTime = 24 * 60 * 60 * 1000;
+const modal = new bootstrap.Modal(document.getElementById('photoModal'));
+let canvas, ctx, image, cropStart;
 
-// Initialize waifu2x-wasm with error handling
 let waifu2x;
 async function initWaifu2x() {
     try {
         waifu2x = new Waifu2x();
-        await waifu2x.init();
+        await waifu2x.init({ noiseLevel: 1, scale: 2 });
         console.log('Waifu2x initialized successfully');
     } catch (error) {
         console.error('Waifu2x initialization failed:', error);
         alert('Image enhancement failed to initialize. Using original images.');
-        waifu2x = null; // Fallback to no upscaling
+        waifu2x = null;
     }
 }
 initWaifu2x();
 
-// Function to upscale image using waifu2x (with fallback)
+// Function to upscale image
 async function upscaleImage(dataUrl) {
-    if (!waifu2x) return dataUrl; // Fallback if upscaling fails
+    if (!waifu2x) return dataUrl;
     try {
         const img = new Image();
         img.src = dataUrl;
         await new Promise(resolve => img.onload = resolve);
 
         const canvas = document.createElement('canvas');
-        canvas.width = img.width * 2; // 2x upscaling
+        canvas.width = img.width * 2;
         canvas.height = img.height * 2;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        const upscaledDataUrl = await waifu2x.upscale(canvas.toDataURL('image/jpeg'));
-        return upscaledDataUrl || dataUrl; // Return upscaled or original if fails
+        const upscaledDataUrl = await waifu2x.upscale(canvas.toDataURL('image/jpeg', 0.95));
+        return upscaledDataUrl || dataUrl;
     } catch (error) {
         console.error('Upscaling error:', error);
-        return dataUrl; // Fallback to original
+        return dataUrl;
     }
 }
 
-// Compress image (optional step before upscaling)
+// Compress image
 function compressImage(file, callback) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -48,7 +51,7 @@ function compressImage(file, callback) {
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
-            const maxSize = 3 * 1024 * 1024; // 3MB limit
+            const maxSize = 3 * 1024 * 1024;
             let quality = 0.85;
 
             do {
@@ -69,7 +72,7 @@ function compressImage(file, callback) {
     reader.readAsDataURL(file);
 }
 
-// Save photo to LocalStorage
+// Save photo
 function savePhoto(dataUrl) {
     let photos = JSON.parse(localStorage.getItem('photos')) || [];
     if (photos.length >= maxPhotos) {
@@ -89,10 +92,10 @@ function cleanExpiredPhotos() {
     return photos;
 }
 
-// Load Gallery with Balloons Behind Photos
+// Load Gallery
 function loadGallery(container) {
     cleanExpiredPhotos();
-    container.innerHTML = ''; // Clear gallery
+    container.innerHTML = '';
     const photos = JSON.parse(localStorage.getItem('photos')) || [];
     if (photos.length === 0) {
         container.innerHTML = '<p class="text-center text-muted">No photos uploaded yet!</p>';
@@ -103,13 +106,10 @@ function loadGallery(container) {
         col.className = 'col-md-4 mb-4';
         col.innerHTML = `
             <div class="card">
-                <a href="${photo.url}" download="sizzu_edited_photo_${index}.jpg">
-                    <img src="${photo.url}" class="card-img-top" alt="Sizzu Photo ${index}">
-                </a>
+                <img src="${photo.url}" class="card-img-top" onclick="showFullPhoto('${photo.url}', ${index})" alt="Sizzu Photo ${index}">
             </div>
         `;
 
-        // Add balloons behind each card
         for (let i = 0; i < 3; i++) {
             const balloon = document.createElement('div');
             balloon.className = 'balloon';
@@ -126,7 +126,7 @@ function loadGallery(container) {
     observeGalleryItems();
 }
 
-// Observe gallery items for scroll animation
+// Observe gallery items
 function observeGalleryItems() {
     const items = document.querySelectorAll('#gallery .col-md-4');
     const observer = new IntersectionObserver(entries => {
@@ -139,11 +139,120 @@ function observeGalleryItems() {
     items.forEach(item => observer.observe(item));
 }
 
-// Upload & Upscale Photo
+// Show Full Photo and Edit
+function showFullPhoto(url, index) {
+    canvas = document.getElementById('editCanvas');
+    ctx = canvas.getContext('2d', { willReadFrequently: true });
+    image = new Image();
+    image.src = url;
+    image.onload = () => {
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.drawImage(image, 0, 0);
+        document.getElementById('photoModalLabel').innerText = `Full Photo ${index}`;
+        modal.show();
+    };
+}
+
+// Edit Functions
+document.getElementById('cropBtn').addEventListener('click', () => {
+    if (!cropStart) {
+        cropStart = { x: 0, y: 0 };
+        canvas.addEventListener('mousedown', startCrop);
+        canvas.addEventListener('mousemove', doCrop);
+        canvas.addEventListener('mouseup', endCrop);
+        alert('Click and drag to crop, then click Crop again to confirm.');
+    } else {
+        endCrop();
+    }
+});
+
+function startCrop(e) {
+    cropStart = { x: e.offsetX, y: e.offsetY };
+}
+
+function doCrop(e) {
+    if (cropStart) {
+        const width = e.offsetX - cropStart.x;
+        const height = e.offsetY - cropStart.y;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0);
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cropStart.x, cropStart.y, width, height);
+    }
+}
+
+function endCrop() {
+    if (cropStart) {
+        const cropEnd = { x: event.offsetX, y: event.offsetY };
+        const width = cropEnd.x - cropStart.x;
+        const height = cropEnd.y - cropStart.y;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = Math.abs(width);
+        tempCanvas.height = Math.abs(height);
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(image, cropStart.x, cropStart.y, width, height, 0, 0, tempCanvas.width, tempCanvas.height);
+        image.src = tempCanvas.toDataURL();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0);
+        cropStart = null;
+        canvas.removeEventListener('mousedown', startCrop);
+        canvas.removeEventListener('mousemove', doCrop);
+        canvas.removeEventListener('mouseup', endCrop);
+    }
+}
+
+document.getElementById('brightnessBtn').addEventListener('click', () => {
+    const brightness = prompt('Enter brightness value (-100 to 100):', '10');
+    if (brightness !== null) {
+        const value = parseInt(brightness);
+        if (!isNaN(value) && value >= -100 && value <= 100) {
+            ctx.filter = `brightness(${100 + value}%)`;
+            ctx.drawImage(image, 0, 0);
+            ctx.filter = 'none'; // Reset filter after drawing
+        } else {
+            alert('Please enter a value between -100 and 100!');
+        }
+    }
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    savePhoto(dataUrl);
+    loadGallery(document.getElementById('gallery'));
+    modal.hide();
+    alert('Photo saved and updated in gallery!');
+});
+
+// Upload Options
 const photoInput = document.getElementById('photoInput');
-const uploadBtn = document.getElementById('uploadBtn');
-if (uploadBtn) {
-    uploadBtn.addEventListener('click', () => {
+const uploadOriginalBtn = document.getElementById('uploadOriginalBtn');
+const uploadEnhanceBtn = document.getElementById('uploadEnhanceBtn');
+
+if (uploadOriginalBtn) {
+    uploadOriginalBtn.addEventListener('click', () => {
+        const file = photoInput.files[0];
+        if (file) {
+            if (file.size > 3 * 1024 * 1024) {
+                alert('Photo size should be under 3MB!');
+                return;
+            }
+            compressImage(file, (dataUrl) => {
+                if (savePhoto(dataUrl)) {
+                    alert('Original photo uploaded successfully! View below.');
+                    photoInput.value = '';
+                    loadGallery(document.getElementById('gallery'));
+                }
+            });
+        } else {
+            alert('Please select a photo!');
+        }
+    });
+}
+
+if (uploadEnhanceBtn) {
+    uploadEnhanceBtn.addEventListener('click', () => {
         const file = photoInput.files[0];
         if (file) {
             if (file.size > 3 * 1024 * 1024) {
@@ -154,13 +263,13 @@ if (uploadBtn) {
                 try {
                     const upscaledUrl = await upscaleImage(dataUrl);
                     if (savePhoto(upscaledUrl)) {
-                        alert('Uploaded and enhanced to HD successfully! View below.');
+                        alert('Enhanced photo uploaded successfully! View below.');
                         photoInput.value = '';
                         loadGallery(document.getElementById('gallery'));
                     }
                 } catch (error) {
-                    console.error('Upscaling or save error:', error);
-                    alert('Enhancement failed, using original image. Check console for details.');
+                    console.error('Upscaling error:', error);
+                    alert('Enhancement failed, using original image.');
                     if (savePhoto(dataUrl)) {
                         loadGallery(document.getElementById('gallery'));
                     }
@@ -195,6 +304,6 @@ function changeSlide(n) {
     slideshowImg.src = photos[slideIndex].url;
 }
 
-// Load Gallery on page load
+// Load Gallery
 const gallery = document.getElementById('gallery');
 if (gallery) loadGallery(gallery);
