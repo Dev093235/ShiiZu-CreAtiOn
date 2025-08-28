@@ -10,7 +10,6 @@ body {
 .cover-photo {
     position: relative;
     text-align: center;
-    background: #000;
 }
 .cover-photo img {
     width: 100%;
@@ -42,6 +41,7 @@ h1 {
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s;
+    background: transparent; /* Transparent for animations behind */
 }
 .card:hover {
     transform: translateY(-5px);
@@ -62,14 +62,24 @@ h1 {
     background: #0056b3;
     transform: scale(1.05);
 }
+#gallery .col-md-4 {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.6s ease, transform 0.6s ease; /* Scroll animation */
+}
+#gallery .col-md-4.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
 .balloon {
     position: absolute;
     width: 30px;
     height: 45px;
-    background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff8787);
+    background: radial-gradient(circle at 30% 30%, hsl(var(--hue), 70%, 70%), hsl(var(--hue), 80%, 60%));
     border-radius: 50%;
     animation: float 12s infinite;
     opacity: 0.6;
+    z-index: 0; /* Behind gallery */
 }
 .balloon::after {
     content: '';
@@ -123,4 +133,4 @@ h1 {
     .cover-photo img {
         max-height: 200px;
     }
-    }
+}
