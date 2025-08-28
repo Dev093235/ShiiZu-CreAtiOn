@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="cover-photo" onclick="showSlideshow()">
-        <img src="assets/images/cover.jpg" alt="Group Cover Photo" class="img-fluid" onerror="this.src='https://via.placeholder.com/1200x300?text=No+Cover+Photo';">
+        <img src="assets/images/cover.jpg" alt="Group Cover Photo" class="img-fluid" onerror="this.src='https://via.placeholder.com/1200x300?text=Add+Cover+Photo';">
     </div>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container">
@@ -18,24 +18,10 @@
     </nav>
     <div class="container mt-5">
         <h1>Upload & View Edited Photos</h1>
-        <p>Upload HD photo from your phone (compressed to <1MB). Expires in 24h. Max 30 photos.</p>
+        <p>Upload HD photo (up to 3MB, compressed to <2MB). Expires in 24h. Max 30 photos.</p>
         <div class="input-group mb-3">
             <input type="file" id="photoInput" accept="image/*" class="form-control">
             <button id="uploadBtn" class="btn btn-primary">Upload Photo</button>
-        </div>
-        <div class="row mb-3">
-            <div class="col">
-                <label for="filterSelect">Apply Filter:</label>
-                <select id="filterSelect" class="form-control">
-                    <option value="none">None</option>
-                    <option value="brightness">Brightness</option>
-                    <option value="contrast">Contrast</option>
-                </select>
-            </div>
-            <div class="col">
-                <label for="filterValue">Value (0-200):</label>
-                <input type="range" id="filterValue" min="0" max="200" value="100" class="form-control">
-            </div>
         </div>
         <div id="gallery" class="row"></div>
     </div>
