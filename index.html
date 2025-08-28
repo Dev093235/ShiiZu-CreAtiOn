@@ -3,33 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FB DP Editor</title>
+    <title>Sizzu Creation World</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="cover-photo" onclick="showSlideshow()">
-        <img src="assets/images/cover.jpg" alt="Group Cover Photo" class="img-fluid" onerror="this.src='https://via.placeholder.com/1200x300?text=Add+Cover+Photo';">
+        <img src="assets/images/cover.jpg" alt="Sizzu Creation Cover" class="img-fluid" onerror="this.src='https://via.placeholder.com/1200x300?text=Add+Cover+Photo';">
+    </div>
+    <div class="welcome-text text-center py-4">
+        <h2 class="welcome-title">Welcome to Sizzu Creation World</h2>
     </div>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">FB DP Editor</a>
+            <a class="navbar-brand" href="#">Sizzu DP Editor</a>
         </div>
     </nav>
     <div class="container mt-5">
-        <h1>Upload & View Edited Photos</h1>
-        <p>Upload HD photo (up to 3MB, compressed to <2MB). Expires in 24h. Max 30 photos.</p>
-        <div class="input-group mb-3">
+        <h1 class="text-primary fw-bold">Upload & View Edited Photos</h1>
+        <p class="text-muted">Upload HD photo (up to 3MB). Auto-upscaled to HD/4K. Expires in 24h. Max 30 photos.</p>
+        <div class="input-group mb-4">
             <input type="file" id="photoInput" accept="image/*" class="form-control">
-            <button id="uploadBtn" class="btn btn-primary">Upload Photo</button>
+            <button id="uploadBtn" class="btn btn-primary ms-2">Upload & Enhance</button>
         </div>
-        <div id="gallery" class="row"></div>
+        <div id="gallery" class="row g-3"></div>
     </div>
     <div id="slideshow" class="slideshow" style="display: none;">
         <button class="slideshow-btn prev" onclick="changeSlide(-1)">&#10094;</button>
         <img id="slideshow-img" src="" alt="Slideshow">
         <button class="slideshow-btn next" onclick="changeSlide(1)">&#10095;</button>
     </div>
+    <script src="https://unpkg.com/waifu2x-wasm@0.1.0/dist/waifu2x.min.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
