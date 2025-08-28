@@ -69,6 +69,20 @@ function loadGallery(container) {
         `;
         container.appendChild(col);
     });
+    observeGalleryItems();
+}
+
+// Observe gallery items for scroll animation
+function observeGalleryItems() {
+    const items = document.querySelectorAll('#gallery .col-md-4');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+    items.forEach(item => observer.observe(item));
 }
 
 // Upload Edited Photo
@@ -78,10 +92,6 @@ if (uploadBtn) {
     uploadBtn.addEventListener('click', () => {
         const file = photoInput.files[0];
         if (file) {
-            if (file.size > 3 * 1024 * 1024) {
-                alert('Photo size should be under 3MB!');
-                return;
-            }
             compressImage(file, (dataUrl) => {
                 if (savePhoto(dataUrl)) {
                     alert('Uploaded! View below.');
@@ -118,7 +128,7 @@ function changeSlide(n) {
 
 // Add Background Animations
 function createBalloons() {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
         const balloon = document.createElement('div');
         balloon.className = 'balloon';
         balloon.style.left = Math.random() * 100 + 'vw';
@@ -127,7 +137,7 @@ function createBalloons() {
         document.body.appendChild(balloon);
         setTimeout(() => balloon.remove(), 15000);
     }
-    setTimeout(createBalloons, 5000);
+    setTimeout(createBalloons, 3000);
 }
 
 createBalloons();
