@@ -9,23 +9,41 @@
 </head>
 <body>
     <div class="cover-photo" onclick="showSlideshow()">
-        <img src="assets/images/cover.jpg" alt="Group Cover Photo" class="img-fluid">
+        <img src="assets/images/cover.jpg" alt="Group Cover Photo" class="img-fluid" onerror="this.src='https://via.placeholder.com/1200x300?text=No+Cover+Photo';">
     </div>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">FB DP Editor</a>
-            <a href="gallery.html" class="btn btn-info">Go to Download</a>
         </div>
     </nav>
     <div class="container mt-5">
-        <h1>Upload Edited Photo</h1>
-        <p>Upload HD photo from your phone (auto-compressed to <1MB). Share URL. Expires in 24h.</p>
+        <h1>Upload & View Edited Photos</h1>
+        <p>Upload HD photo from your phone (compressed to <1MB). Expires in 24h. Max 30 photos.</p>
         <div class="input-group mb-3">
             <input type="file" id="photoInput" accept="image/*" class="form-control">
             <button id="uploadBtn" class="btn btn-primary">Upload Photo</button>
         </div>
-        <div id="uploadedPhotos" class="row"></div>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="filterSelect">Apply Filter:</label>
+                <select id="filterSelect" class="form-control">
+                    <option value="none">None</option>
+                    <option value="brightness">Brightness</option>
+                    <option value="contrast">Contrast</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="filterValue">Value (0-200):</label>
+                <input type="range" id="filterValue" min="0" max="200" value="100" class="form-control">
+            </div>
+        </div>
+        <div id="gallery" class="row"></div>
+    </div>
+    <div id="slideshow" class="slideshow" style="display: none;">
+        <button class="slideshow-btn prev" onclick="changeSlide(-1)">&#10094;</button>
+        <img id="slideshow-img" src="" alt="Slideshow">
+        <button class="slideshow-btn next" onclick="changeSlide(1)">&#10095;</button>
     </div>
     <script src="js/script.js"></script>
 </body>
-          </html>
+</html>
