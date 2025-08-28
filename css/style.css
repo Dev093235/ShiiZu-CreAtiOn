@@ -4,6 +4,8 @@ body {
     font-family: Arial, sans-serif;
     position: relative;
     overflow-x: hidden;
+    margin: 0;
+    padding: 0;
 }
 body::before {
     content: '';
@@ -51,6 +53,7 @@ body::before {
 .cover-photo {
     position: relative;
     text-align: center;
+    background: #000;
 }
 .cover-photo img {
     width: 100%;
@@ -65,21 +68,36 @@ body::before {
     max-width: 1200px;
     position: relative;
     z-index: 1;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+}
+.card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 .card-img-top {
     object-fit: cover;
     height: 200px;
+    transition: transform 0.3s;
+}
+.card:hover .card-img-top {
+    transform: scale(1.05);
 }
 .btn {
     transition: all 0.3s ease;
 }
 .btn:hover {
     transform: scale(1.05);
+    background-color: #0056b3;
 }
-#uploadedPhotos img {
+#gallery img {
     max-width: 200px;
     margin: 10px;
     cursor: pointer;
+    border-radius: 10px;
 }
 .slideshow {
     position: fixed;
@@ -96,6 +114,7 @@ body::before {
 .slideshow-img {
     max-width: 90%;
     max-height: 90%;
+    border-radius: 10px;
 }
 .slideshow-btn {
     position: absolute;
@@ -107,6 +126,7 @@ body::before {
     font-size: 24px;
     cursor: pointer;
     padding: 10px;
+    border-radius: 50%;
 }
 .prev { left: 10px; }
 .next { right: 10px; }
@@ -117,7 +137,7 @@ body::before {
     .cover-photo img {
         max-height: 200px;
     }
-    #uploadedPhotos img {
+    #gallery img {
         max-width: 150px;
     }
 }
