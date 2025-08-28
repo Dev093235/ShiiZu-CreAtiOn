@@ -210,7 +210,7 @@ document.getElementById('brightnessBtn').addEventListener('click', () => {
         if (!isNaN(value) && value >= -100 && value <= 100) {
             ctx.filter = `brightness(${100 + value}%)`;
             ctx.drawImage(image, 0, 0);
-            ctx.filter = 'none'; // Reset filter after drawing
+            ctx.filter = 'none';
         } else {
             alert('Please enter a value between -100 and 100!');
         }
