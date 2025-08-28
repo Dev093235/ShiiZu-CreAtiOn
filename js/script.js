@@ -2,7 +2,7 @@ let slideIndex = 0;
 const maxPhotos = 30;
 const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
 
-// Compress image to <1MB
+// Compress image to <1MB with better quality
 function compressImage(file, callback) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -12,16 +12,15 @@ function compressImage(file, callback) {
             let width = img.width;
             let height = img.height;
             const maxSize = 1024 * 1024; // 1MB
-            let quality = 0.9;
+            let quality = 0.7; // Start with decent quality
 
-            // Reduce quality until size is under 1MB
             do {
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                if (dataUrl.length < maxSize || quality <= 0.1) {
+                if (dataUrl.length < maxSize || quality <= 0.3) {
                     callback(dataUrl);
                     break;
                 }
@@ -31,6 +30,36 @@ function compressImage(file, callback) {
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+// Apply filter
+function applyFilter(dataUrl, filterType, value) {
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            if (filterType === 'brightness') {
+                data[i] = data[i] * (value / 100);     // R
+                data[i + 1] = data[i + 1] * (value / 100); // G
+                data[i + 2] = data[i + 2] * (value / 100); // B
+            } else if (filterType === 'contrast') {
+                const factor = (259 * (value + 255)) / (255 * (259 - value));
+                data[i] = factor * (data[i] - 128) + 128;     // R
+                data[i + 1] = factor * (data[i + 1] - 128) + 128; // G
+                data[i + 2] = factor * (data[i + 2] - 128) + 128; // B
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+        return canvas.toDataURL('image/jpeg');
+    };
+    img.src = dataUrl;
 }
 
 // Save photo to LocalStorage
@@ -75,35 +104,27 @@ function loadGallery(container) {
 // Upload Edited Photo
 const photoInput = document.getElementById('photoInput');
 const uploadBtn = document.getElementById('uploadBtn');
+const filterSelect = document.getElementById('filterSelect');
+const filterValue = document.getElementById('filterValue');
 if (uploadBtn) {
     uploadBtn.addEventListener('click', () => {
         const file = photoInput.files[0];
         if (file) {
             compressImage(file, (dataUrl) => {
-                if (savePhoto(dataUrl)) {
-                    alert('Uploaded! Share this URL in group: ' + dataUrl.slice(0, 20) + '...');
+                const filterType = filterSelect.value;
+                const value = filterValue.value;
+                let finalUrl = dataUrl;
+                if (filterType !== 'none') {
+                    finalUrl = applyFilter(dataUrl, filterType, value);
+                }
+                if (savePhoto(finalUrl)) {
+                    alert('Uploaded! View below or share URL: ' + finalUrl.slice(0, 20) + '...');
                     photoInput.value = '';
-                    loadGallery(document.getElementById('uploadedPhotos')); // Show uploaded photo
+                    loadGallery(document.getElementById('gallery'));
                 }
             });
         } else {
             alert('Select a photo!');
-        }
-    });
-}
-
-// Show Photo in Gallery
-const photoUrl = document.getElementById('photoUrl');
-const addUrlBtn = document.getElementById('addUrlBtn');
-if (addUrlBtn) {
-    addUrlBtn.addEventListener('click', () => {
-        cleanExpiredPhotos();
-        const url = photoUrl.value.trim();
-        if (url && url.startsWith('data:image')) {
-            loadGallery(document.getElementById('gallery'), url);
-            photoUrl.value = '';
-        } else {
-            alert('Paste a valid photo URL from group!');
         }
     });
 }
@@ -159,5 +180,5 @@ createBalloons();
 createCodingText();
 
 // Load Gallery
-const gallery = document.getElementById('uploadedPhotos');
+const gallery = document.getElementById('gallery');
 if (gallery) loadGallery(gallery);
